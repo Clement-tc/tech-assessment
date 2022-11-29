@@ -6,6 +6,11 @@
   "products.productId": {
     "in": ["5449000054227"]
   },
+  "product.quantity":{
+    "and":{
+    "gt":5,"lt":50
+    }
+    },
   "date": {
     "and": {
       "gt": "2021-01-01T00:00:00.000Z",
