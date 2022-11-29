@@ -33,11 +33,19 @@ class EligibilityService {
       
   
       case("in"):
+        if(Array.isArray(cartElement)){
+          for(const x of cartElement){
+            if (criteriaElement.includes(x)){
+              return true
+            }
+          }
+          return false
+        }
+        console.log("inside in ","cartelement", cartElement,"criteriaelement:",criteriaElement,"resutl :",criteriaElement.includes(cartElement))
         return criteriaElement.includes(cartElement)
   
       case("or"):
         for (var c in criteriaElement){
-          console.log(c)
           if(this.handleCondition(cartElement,criteriaElement[c],c)){
             return true
           }
@@ -74,7 +82,6 @@ class EligibilityService {
 
   isValidObject(cartValue,criteriaValue){
     /*this function return a boolean to indicate if the object respect the condition  */
-    console.log("cart value:",cartValue,"criteria value:",criteriaValue)
     if(typeof(criteriaValue)!="object"){
       if(Array.isArray(cartValue)){
         return cartValue.includes(criteriaValue)
@@ -83,7 +90,6 @@ class EligibilityService {
         }
       
     }else{
-      console.log("handlecondition")
       return this.handleCondition(cartValue,Object.values(criteriaValue)[0],Object.keys(criteriaValue)[0])
       
     }
@@ -104,11 +110,10 @@ class EligibilityService {
         const cartValue=this.getObjectValue(cart , key)
         const criteriaValue = criteria[key]
 
-        console.log(cartValue)
         if(cartValue==undefined){
           return false
         }
-          if(!this.isValidSubObject(cartValue,criteriaValue)){
+          if(!this.isValidObject(cartValue,criteriaValue)){
             return false
           }
 
