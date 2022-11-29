@@ -10,47 +10,88 @@ class EligibilityService {
   
   
   
-    handleCondition(cartElement,criteriaElement,condition){//return result for each condition
-      if(condition=="gt"){
+  handleCondition(cartElement,criteriaElement,condition){
+    /*return a boolean to know if the object value respect the criteria condition*/
+    switch(condition){
+      case("gt"):
         return cartElement>criteriaElement
-      }
-      if(condition=="lt"){
+      case("lt"):
         return cartElement<criteriaElement
-      }
-      if(condition=="gte"){
+      case("gte"):
         return cartElement>=criteriaElement
-      }
-      if(condition=="lte"){
+      case("lte"):
         return cartElement<= criteriaElement
-      }
+      
   
-      if(condition=="and"){
+      case("and"):
         for (var c in criteriaElement){
           if(!this.handleCondition(cartElement,criteriaElement[c],c)){
             return false
           }
         }
         return true
-      }
+      
   
-      if(condition=="in"){
+      case("in"):
         return criteriaElement.includes(cartElement)
-      }
   
-      if(condition=="or"){
+      case("or"):
         for (var c in criteriaElement){
+          console.log(c)
           if(this.handleCondition(cartElement,criteriaElement[c],c)){
             return true
           }
         }
         return false
+      
+    }
+  }
+  
+  getObjectValue(object,key){
+    /*return the value of an object with his key as a parameter*/
+    const keySplit = key.split('.');
+    if (keySplit.length === 1) {
+      if (Array.isArray(object)) {
+        var valuesArray=[]
+        for(const o of object){
+          valuesArray.push(o[key])
+        }
+
+        return valuesArray
+      } else {
+        return object[key];
+      }
+    } else {
+      const condition = keySplit.shift();
+      if (object[condition] === undefined) {
+        return undefined;
+      } else {
+        return this.getObjectValue(object[condition], keySplit.shift());
       }
     }
   
-  
+}
+
+  isValidObject(cartValue,criteriaValue){
+    /*this function return a boolean to indicate if the object respect the condition  */
+    console.log("cart value:",cartValue,"criteria value:",criteriaValue)
+    if(typeof(criteriaValue)!="object"){
+      if(Array.isArray(cartValue)){
+        return cartValue.includes(criteriaValue)
+        }else{
+          return cartValue==criteriaValue
+        }
+      
+    }else{
+      console.log("handlecondition")
+      return this.handleCondition(cartValue,Object.values(criteriaValue)[0],Object.keys(criteriaValue)[0])
+      
+    }
+    
+  }
   
     isEligible(cart, criteria) {
-      // TODO: compute cart eligibility here.
+      /*return a boolean that signifie if the cart validate all the criteria passed in parameter*/
       if( Object.keys(criteria).length === 0){//when criteria has no input
         return true
       }
@@ -58,50 +99,19 @@ class EligibilityService {
       if( Object.keys(cart).length === 0){//when cart has no attributs
         return false
       }
-      const condition=["gt","lt", "gte", "lte","and","in","or"]
-  
   
       for( var key in criteria){ //Loop over each criteria
-        var cartValue = cart[key]
+        const cartValue=this.getObjectValue(cart , key)
         const criteriaValue = criteria[key]
-  
-        if(key.includes('.')){//check if sub object respect condition
-          const target=key.split('.')
-          const dotKey=target[0]
-          const subObject=target[1]
-  
-          if(cart[dotKey]==undefined && (cart[dotKey][subObject]==undefined || cart[dotKey].length==0)){//sort out bad input in criteria
+
+        console.log(cartValue)
+        if(cartValue==undefined){
+          return false
+        }
+          if(!this.isValidSubObject(cartValue,criteriaValue)){
             return false
           }
-  
-          cartValue=[]
-          for(var x in cart[dotKey]){
-            if(Array.isArray(cart[dotKey])){
-              cartValue.push(cart[dotKey][x][subObject])
-            }else{
-              cartValue.push(cart[dotKey][x])
-            }
-          }
-  
-          return cartValue.includes(criteriaValue)
-          
-        }else{
-  
-  
-  
-          if(typeof(criteriaValue)!="object"){//default verification with no condition, ==
-            if(cartValue!=criteriaValue){
-              return false
-            }
-          }else{//verification with condition
-            if(condition.includes(Object.keys(criteriaValue)[0])){
-              if(!this.handleCondition(cartValue,Object.values(criteriaValue)[0],Object.keys(criteriaValue)[0])){
-                return false
-              }
-            }
-          }
-  
-      }
+
     }
   
       return true;
